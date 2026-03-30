@@ -1,0 +1,17 @@
+diff --git a/Linux/scsi_linux.cpp b/Linux/scsi_linux.cpp
+--- a/Linux/scsi_linux.cpp
++++ b/Linux/scsi_linux.cpp
+@@ -22,12 +22,10 @@
+ 
+ #include <sys/ioctl.h>
+ #include <linux/param.h>
+-#include <linux/../scsi/sg.h>	// workaround for broken RedHat 6.0 /usr/include/scsi
++#include <scsi/sg.h>
+ #include <unistd.h>
+ #include <errno.h>
+ 
+-#define DRIVER_SENSE 0x08
+-
+ #include "main.h"
+ #include "prefs.h"
+ #include "user_strings.h"
