@@ -1,0 +1,25 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1266,7 +1266,7 @@ AC_CACHE_CHECK([whether your system supports Mach exceptions],
+ )
+
+ case $target_os:$target_cpu in
+-darwin*:arm) ac_cv_have_mach_exceptions=yes;;
++darwin*:arm|darwin*:aarch64) ac_cv_have_mach_exceptions=yes;;
+ esac
+
+ AC_TRANSLATE_DEFINE(HAVE_MACH_EXCEPTIONS, "$ac_cv_have_mach_exceptions",
+@@ -1506,9 +1506,11 @@ if [[ "x$WANT_JIT" = "xyes" -a "x$ADDRESSING_MODE" != "xdirect" ]]; then
+   WANT_JIT="no"
+ fi
+
+-if [[ "x$OS_TYPE" = "xdarwin" ]]; then
++if [[ "x$OS_TYPE" = "xdarwin" && "$target_cpu" != "aarch64" ]]; then
+   WANT_VOSF=no
+-  if [[ "$target_cpu" != "arm" ]]; then
++fi
++if [[ "x$OS_TYPE" = "xdarwin" ]]; then
++  if [[ "$target_cpu" != "arm" && "$target_cpu" != "aarch64" ]]; then
+     LDFLAGS="$LDFLAGS -Wl,-no_pie -pagezero_size 0x1000"
+   fi
+ fi

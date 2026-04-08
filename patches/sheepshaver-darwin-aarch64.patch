@@ -1,0 +1,24 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -353,7 +353,11 @@ if [[ "$WANT_GTK" = "GTK3" -o "$WANT_GTK" = "any" ]]; then
+     WANT_GTK=GTK3
+     GUI_CFLAGS="$GTK3_CFLAGS"
+     GUI_LIBS="$GTK3_LIBS"
+-    LDFLAGS="$LDFLAGS -Wl,--export-dynamic"
++    case $target_os in
++    darwin*)
++      ;;
++    *) LDFLAGS="$LDFLAGS -Wl,--export-dynamic";;
++    esac
+     AC_CHECK_PROG([ac_cv_gcr], [glib-compile-resources], [yes])
+     if [[ "$ac_cv_gcr" = "yes" ]]; then
+       GCR="glib-compile-resources"
+@@ -1301,7 +1305,7 @@ if [[ "$WANT_ADDRESSING_MODE" = "direct" ]]; then
+ fi
+
+ case "$host" in
+-  arm-apple-*)
++  arm-apple-*|aarch64-apple-*)
+     AC_DEFINE_UNQUOTED(NATMEM_OFFSET, 0x400000000000, [Define constant offset for Mac address translation])
+     ;;
+ esac

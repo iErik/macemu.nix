@@ -26,7 +26,9 @@ stdenv.mkDerivation {
 
   sourceRoot = "source/BasiliskII/src/Unix";
 
-  patches = [ ./patches/scsi-linux-nix.patch ];
+  patches =
+    lib.optionals stdenv.hostPlatform.isLinux [ ./patches/scsi-linux-nix.patch ]
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [ ./patches/basilisk2-darwin-aarch64.patch ];
 
   strictDeps = true;
 
@@ -41,25 +43,29 @@ stdenv.mkDerivation {
     [
       gtk3
       SDL2
+      ncurses
+      readline
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
       libX11
       libXext
       libXxf86dga
       libXxf86vm
-      ncurses
-      readline
     ]
     ++ lib.optionals (with stdenv.hostPlatform; isAarch32 || isAarch64) [
       gmp
       mpfr
     ];
 
-  postPatch = ''
+  postPatch = lib.optionalString stdenv.hostPlatform.isLinux ''
     mkdir -p scsi_compat/scsi
     cp ${./files/scsi/sg.h} scsi_compat/scsi/sg.h
   '';
 
   preConfigure = ''
-    export NIX_CFLAGS_COMPILE="''${NIX_CFLAGS_COMPILE-} -isystem $(pwd)/scsi_compat"
+    ${lib.optionalString stdenv.hostPlatform.isLinux ''
+      export NIX_CFLAGS_COMPILE="''${NIX_CFLAGS_COMPILE-} -isystem $(pwd)/scsi_compat"
+    ''}
     NO_CONFIGURE=1 ./autogen.sh
   '';
 
@@ -87,6 +93,6 @@ stdenv.mkDerivation {
     license = lib.licenses.gpl2Plus;
     maintainers = [ ];
     mainProgram = "BasiliskII";
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

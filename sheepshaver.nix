@@ -26,12 +26,15 @@ stdenv.mkDerivation {
 
   sourceRoot = "source/SheepShaver/src/Unix";
 
+  patches = lib.optionals stdenv.hostPlatform.isDarwin [ ./patches/sheepshaver-darwin-aarch64.patch ];
+
   postUnpack = ''
     chmod -R u+w source
   '';
 
   postPatch = ''
     patchShebangs ../kpx_cpu
+  '' + lib.optionalString stdenv.hostPlatform.isLinux ''
     scsi_cpp="../../../BasiliskII/src/Unix/Linux/scsi_linux.cpp"
     substituteInPlace "$scsi_cpp" \
       --replace-fail '#include <linux/../scsi/sg.h>	// workaround for broken RedHat 6.0 /usr/include/scsi' '#include <scsi/sg.h>'
@@ -51,20 +54,27 @@ stdenv.mkDerivation {
     wrapGAppsHook3
   ];
 
-  buildInputs = [
-    gtk3
-    SDL2
-    libX11
-    libXext
-    libXxf86dga
-    libXxf86vm
-    ncurses
-    readline
-  ];
+  buildInputs =
+    [
+      gtk3
+      SDL2
+      ncurses
+      readline
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
+      libX11
+      libXext
+      libXxf86dga
+      libXxf86vm
+    ];
 
   preConfigure = ''
-    export NIX_CFLAGS_COMPILE="''${NIX_CFLAGS_COMPILE-} -isystem $(pwd)/scsi_compat"
+    ${lib.optionalString stdenv.hostPlatform.isLinux ''
+      export NIX_CFLAGS_COMPILE="''${NIX_CFLAGS_COMPILE-} -isystem $(pwd)/scsi_compat"
+    ''}
     ( cd ../../.. && make -C SheepShaver links )
+    cp -f ${autoconf}/share/autoconf/build-aux/config.guess config.guess
+    cp -f ${autoconf}/share/autoconf/build-aux/config.sub config.sub
     NO_CONFIGURE=1 ./autogen.sh
     substituteInPlace configure --replace-fail '/usr/bin/file' '${file}/bin/file'
   '';
@@ -74,6 +84,10 @@ stdenv.mkDerivation {
       echo '#define STDC_HEADERS 1' >> config.h
     fi
   '';
+
+  env = lib.optionalAttrs stdenv.hostPlatform.isDarwin {
+    NIX_CFLAGS_COMPILE = "-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION";
+  };
 
   configureFlags = [
     "--enable-sdl-video"
@@ -98,6 +112,6 @@ stdenv.mkDerivation {
     license = lib.licenses.gpl2Plus;
     maintainers = [ ];
     mainProgram = "SheepShaver";
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }
